@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Library Book Spotlight</title>
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM & COLOR PALETTE (LIGHT THEME)
+       Primary Dark Red: #59282a | Accent Gold: #FCB040 | Background: Crisp Light #ffffff / #f9f9fb
+       ========================================================================== */
+    :root {
+      --bg-dark: #f4f4f7;
+      --bg-card: #ffffff;
+      --bg-card-inner: #fdfbfb;
+      --brand-red: #59282a;
+      --brand-red-light: #78383a;
+      --brand-red-dark: #3f1b1d;
+      --brand-gold: #FCB040;
+      --brand-gold-hover: #e59c2b;
+      --brand-gold-glow: rgba(252, 176, 64, 0.35);
+      --text-bright: #59282a;
+      --text-main: #2b2324;
+      --text-muted: #6e5f61;
+      --shadow-deep: 0 12px 32px rgba(89, 40, 42, 0.12);
+      --shadow-gold: 0 4px 16px rgba(252, 176, 64, 0.25);
+      --radius-lg: 18px;
+      --radius-md: 10px;
+      --radius-sm: 6px;
+      --font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-stack);
+      background-color: #f9f9fb;
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Main Outer Container */
+    .spotlight-widget {
+      width: 100%;
+      max-width: 900px;
+      background: var(--bg-card);
+      border: 2px solid rgba(89, 40, 42, 0.15);
+      border-top: 5px solid var(--brand-red);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-deep);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Library Banner Header */
+    .spotlight-header {
+      background: linear-gradient(90deg, #421d1f 0%, var(--brand-red) 50%, #421d1f 100%);
+      border-bottom: 3px solid var(--brand-gold);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .spotlight-header-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+      color: var(--brand-gold);
+      text-transform: uppercase;
+    }
+
+    .spotlight-header-title svg {
+      fill: var(--brand-gold);
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(252, 176, 64, 0.4);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #22c55e;
+      transition: background-color 0.3s ease;
+    }
+
+    .status-dot.paused {
+      background-color: var(--brand-gold);
+      box-shadow: 0 0 8px var(--brand-gold);
+    }
+
+    /* Progress Bar for Auto-Advance */
+    .progress-bar-container {
+      width: 100%;
+      height: 4px;
+      background: rgba(89, 40, 42, 0.08);
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--brand-red), var(--brand-gold));
+      transition: width 0.1s linear;
+    }
+
+    /* Main Carousel Display Area */
+    .carousel-viewport {
+      position: relative;
+      width: 100%;
+      min-height: 420px;
+      overflow: hidden;
+      outline: none;
+      background-color: #ffffff;
+    }
+
+    .carousel-viewport:focus-visible {
+      outline: 2px solid var(--brand-red);
+      outline-offset: -2px;
+    }
+
+    /* Slides Wrapper */
+    .slides-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Slide Styling (Cross-Fade Transition) */
+    .slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: scale(0.97);
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      gap: 20px;
+      box-sizing: border-box;
+      background: #ffffff;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1);
+      pointer-events: auto;
+      position: relative;
+    }
+
+    /* Book Presentation Layout - Mobile First */
+    .book-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      height: 100%;
+      width: 100%;
+    }
+
+    /* Wide Screens (Tablet / Desktop / TV) */
+    @media (min-width: 640px) {
+      .book-display {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        text-align: left;
+      }
+
+      .slide {
+        padding: 36px 52px;
+        min-height: 420px;
+      }
+    }
+
+    /* Cover Image Container */
+    .cover-container {
+      width: 100%;
+      max-width: 220px;
+      flex-shrink: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    @media (min-width: 640px) {
+      .cover-container {
+        width: 38%;
+        max-width: 260px;
+      }
+    }
+
+    .cover-wrapper {
+      position: relative;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(89, 40, 42, 0.18), 0 0 0 1px rgba(89, 40, 42, 0.1);
+      border: 3px solid var(--brand-red);
+      aspect-ratio: 2 / 3;
+      width: 100%;
+      background-color: #f4f1f1;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .cover-wrapper:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 28px rgba(89, 40, 42, 0.25), 0 0 12px var(--brand-gold-glow);
+    }
+
+    .cover-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Fallback Book Cover Box */
+    .cover-fallback {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      text-align: center;
+      background: linear-gradient(135deg, var(--brand-red) 0%, #3a191a 100%);
+      color: var(--brand-gold);
+    }
+
+    .cover-fallback svg {
+      width: 48px;
+      height: 48px;
+      fill: var(--brand-gold);
+      margin-bottom: 10px;
+    }
+
+    .cover-fallback-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #ffffff;
+      line-clamp: 3;
+      -webkit-line-clamp: 3;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Book Info & Content Column */
+    .book-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    @media (min-width: 640px) {
+      .book-details {
+        align-items: flex-start;
+        text-align: left;
+      }
+    }
+
+    /* Genre Pill Badge */
+    .genre-pill {
+      display: inline-block;
+      background: var(--brand-red);
+      color: var(--brand-gold);
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--brand-gold);
+      box-shadow: 0 2px 6px rgba(89, 40, 42, 0.15);
+    }
+
+    /* Book Title */
+    .book-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--brand-red);
+      line-height: 1.25;
+      letter-spacing: -0.2px;
+    }
+
+    @media (min-width: 640px) {
+      .book-title {
+        font-size: 2.1rem;
+      }
+    }
+
+    /* Book Author */
+    .book-author {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #4a3e40;
+      margin-top: -4px;
+    }
+
+    /* One-Sentence Pitch Callout */
+    .book-pitch-box {
+      background: #fdf8f0;
+      border-left: 4px solid var(--brand-gold);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 14px 18px;
+      margin: 6px 0;
+      width: 100%;
+      border-top: 1px solid rgba(252, 176, 64, 0.25);
+      border-right: 1px solid rgba(252, 176, 64, 0.25);
+      border-bottom: 1px solid rgba(252, 176, 64, 0.25);
+    }
+
+    .book-pitch {
+      font-size: 0.98rem;
+      color: var(--text-main);
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    /* Action Button / Link */
+    .catalog-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--brand-red) 0%, var(--brand-red-dark) 100%);
+      color: var(--brand-gold);
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 11px 22px;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(89, 40, 42, 0.25);
+      transition: all 0.2s ease;
+      margin-top: 4px;
+      border: 1px solid var(--brand-gold);
+      cursor: pointer;
+    }
+
+    .catalog-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(89, 40, 42, 0.35);
+      background: var(--brand-gold);
+      color: var(--brand-red);
+      border-color: var(--brand-red);
+    }
+
+    .catalog-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    /* Controls & Navigation Elements */
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      background: #ffffff;
+      border: 2px solid var(--brand-red);
+      border-radius: 50%;
+      color: var(--brand-red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(89, 40, 42, 0.15);
+    }
+
+    .nav-arrow:hover {
+      background: var(--brand-red);
+      color: var(--brand-gold);
+      border-color: var(--brand-red);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .nav-arrow:focus-visible {
+      outline: 2px solid var(--brand-gold);
+      outline-offset: 2px;
+    }
+
+    .nav-arrow.prev { left: 12px; }
+    .nav-arrow.next { right: 12px; }
+
+    .nav-arrow svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    /* Bottom Control Bar */
+    .spotlight-footer {
+      background: #f7f5f5;
+      border-top: 1px solid rgba(89, 40, 42, 0.12);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* Pagination Indicator Dots */
+    .pagination-dots {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(89, 40, 42, 0.2);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      padding: 0;
+    }
+
+    .dot:hover {
+      background: var(--brand-gold);
+    }
+
+    .dot.active {
+      background: var(--brand-red);
+      border-color: var(--brand-gold);
+      width: 28px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(89, 40, 42, 0.25);
+    }
+
+    .dot:focus-visible {
+      outline: 2px solid var(--brand-gold);
+      outline-offset: 2px;
+    }
+
+    /* Footer Controls Right (Slide Counter & Play/Pause) */
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .slide-counter {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .play-pause-btn {
+      background: #ffffff;
+      border: 1px solid var(--brand-red);
+      color: var(--brand-red);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(89, 40, 42, 0.08);
+    }
+
+    .play-pause-btn:hover {
+      background: var(--brand-red);
+      color: var(--brand-gold);
+    }
+
+    .play-pause-btn svg {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+
+    /* Keyboard navigation notice helper */
+    .keyboard-hint {
+      display: none;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      opacity: 0.8;
+      font-weight: 500;
+    }
+
+    @media (min-width: 768px) {
+      .keyboard-hint {
+        display: inline;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MAIN SPOTLIGHT WIDGET CONTAINER -->
+  <div class="spotlight-widget" id="spotlightWidget" aria-roledescription="carousel" aria-label="Book Spotlight Carousel">
+    
+    <!-- HEADER BAR -->
+    <header class="spotlight-header">
+      <div class="spotlight-header-title">
+        <!-- Book Icon -->
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6zM19 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H5V4h14v16z"/>
+        </svg>
+        <span>Library Spotlight</span>
+      </div>
+      <div class="status-badge" id="statusBadge" title="Status of auto-rotation">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Auto-Playing</span>
+      </div>
+    </header>
+
+    <!-- AUTO-ADVANCE PROGRESS BAR -->
+    <div class="progress-bar-container" aria-hidden="true">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+
+    <!-- CAROUSEL VIEWPORT -->
+    <div class="carousel-viewport" id="carouselViewport" tabindex="0" aria-live="polite">
+      
+      <!-- PREVIOUS ARROW BUTTON -->
+      <button class="nav-arrow prev" id="prevBtn" aria-label="Previous Book">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+        </svg>
+      </button>
+
+      <!-- NEXT ARROW BUTTON -->
+      <button class="nav-arrow next" id="nextBtn" aria-label="Next Book">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+        </svg>
+      </button>
+
+      <!-- SLIDES CONTAINER (Populated dynamically via JavaScript) -->
+      <div class="slides-wrapper" id="slidesWrapper"></div>
+
+    </div>
+
+    <!-- FOOTER CONTROLS BAR -->
+    <footer class="spotlight-footer">
+      <!-- PAGINATION DOTS -->
+      <div class="pagination-dots" id="paginationDots" role="tablist" aria-label="Select a book slide"></div>
+
+      <!-- FOOTER RIGHT HELPERS & CONTROLS -->
+      <div class="footer-right">
+        <span class="keyboard-hint">Use ← → arrow keys</span>
+        <span class="slide-counter" id="slideCounter">1 / 5</span>
+        <button class="play-pause-btn" id="playPauseBtn" aria-label="Pause Auto Advance">
+          <svg id="playPauseIcon" viewBox="0 0 24 24" aria-hidden="true">
+            <!-- Pause Icon Default -->
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+          </svg>
+          <span id="playPauseLabel">Pause</span>
+        </button>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    // =========================================================================
+    // LIBRARIAN INSTRUCTIONS:
+    // To add, edit, or remove books in this Spotlight widget:
+    // 1. Edit the list of books in the `BOOK_LIST` array below.
+    // 2. Make sure each book has quotes around its text values: "Title", "Author", etc.
+    // 3. For coverUrl, use any image URL or Open Library link.
+    // 4. Use `link` or `catalogUrl` for the "Find in Catalog" button link.
+    // =========================================================================
+
+    const BOOK_LIST = [
+      {
+        title: "All the Blues In The Sky",
+        author: "Renee Watson",
+        pitch: "While navigating grief after losing a close friend, Sage discovers the healing power of connection and letting out her pent-up emotions.",
+        genre: "Realistic Fiction / Verse",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9781547605897&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/592585"
+      },
+      {
+        title: "Band Nerd",
+        author: "Sarah Clawson Willis",
+        pitch: "Twelve-year-old Lucy Carver navigates starting at a new school as a band nerd while competing for the top flute soloist spot in this story about friendship and resilience.",
+        genre: "Graphic Novel / Music",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9780358447856&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/595606"
+      },
+      {
+        title: "Blood in the Water",
+        author: "Tiffany Jackson",
+        pitch: "While spending the summer on Martha's Vineyard, Kaylani gets caught in a heart-pounding investigation when a popular local teen dies under suspicious circumstances.",
+        genre: "Mystery / Thriller",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9781338849912&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/594256"
+      },
+      {
+        title: "Candle Island",
+        author: "Lauren Wolk",
+        pitch: "Set on the New England coast, Lucretia and her mother harbor a deep secret in this moving story about loss, complex relationships, and the restorative power of art.",
+        genre: "Historical Fiction / Art",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9780593698549&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/594256"
+      },
+      {
+        title: "I.R.L.",
+        author: "Jenny Goebel",
+        pitch: "Moving to rural Alaska to start fresh after being bullied, sixth-grader Lucy discovers her new virtual school holds chilling, supernatural secrets.",
+        genre: "Horror / Mystery",
+        coverUrl: "https://fss-user-uploads.azureedge.net/user-uploads/production/upload/a674e018-cba3-404e-9588-120555947acc.jpg",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/592600"
+      },
+      {
+        title: "Lion of the Sky",
+        author: "Ritu Hemnani",
+        pitch: "Inspired by true family history, 12-year-old Raj must find the courage to rebuild his life as a refugee after being forced to flee his home during the 1947 Partition of India.",
+        genre: "Historical Fiction / Verse",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9780063284487&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/600415"
+      },
+      {
+        title: "Magnitude",
+        author: "Jennifer A. Nielsen",
+        pitch: "After the Great San Francisco Earthquake of 1906, survivor Cora, along with a friend and a stranger she meets in the rubble, begin a desperate search for their families.",
+        genre: "Drama / Survival",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9781546166115&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/598272 "
+      },
+      {
+        title: "Plain Jane and the Mermaid",
+        author: "Vera Brosgol",
+        pitch: "In this witty fairy-tale flip, plain Jane must venture into mysterious ocean depths to rescue her kidnapped, princely maybe-fiancé.",
+        genre: "Graphic Novel / Fantasy",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9781250314857&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/600423"
+      },
+      {
+        title: "Secrets of the Broken House",
+        author: "Taryn Souders",
+        pitch: "When the town's most notoriously grumpy resident dies unexpectedly, 13-year-old Tucker suspects foul play and sets out to solve a twisty small-town mystery.",
+        genre: "Mystery / Humor",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9781464244971&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/598847"
+      },
+      {
+        title: "The Enemy's Daughter",
+        author: "Anne Blankman",
+        pitch: "After surviving the sinking of the Lusitania, a young German girl hiding her identity in enemy territory learns the power of unexpected friendship.",
+        genre: "Historical Fiction",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9780593623046,9780593623053&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/599962"
+      },
+      {
+        title: "The Lions' Run",
+        author: "Sara Pennypacker",
+        pitch: "In Nazi-occupied France, an orphan boy tired of his timid reputation takes a dangerous stand to prove his bravery on a courageous rescue mission.",
+        genre: "Historical Fiction / Adventure",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9781250392817&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/600416"
+      },
+      {
+        title: "The Tenth Mistake of Hank Hooperman",
+        author: "Gennifer Choldenko",
+        pitch: "When his mother fails to return home, 11-year-old Hank steps up to protect his toddler sister and find a safe second chance for them both.",
+        genre: "Realistic Fiction / Family",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9781524718923,9781524718930,9781524718954&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/598269"
+      },
+{
+        title: "Unfathomable",
+        author: "Mary Boone",
+        pitch: "Dive into 20 wild, true stories of ocean wonder—from octopus wrestling to surviving inside a whale.",
+        genre: "Nonfiction / Science",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9780593904756&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/600440"
+      },
+{
+        title: "Weirdo",
+        author: "Tony Weaver Jr.",
+        pitch: "An awkward, anime-loving preteen struggles with bullying and mental health while learning to embrace who he truly is.",
+        genre: "Graphic Memoir",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9781250772862&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/590508"
+      },
+{
+        title: "Whale Eyes",
+        author: "James Robinson",
+        pitch: "An inspiring, visually creative memoir exploring what it’s like growing up with a rare visual condition and learning to see the world on your own terms.",
+        genre: "Nonfiction / Memoir",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9780593523964&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/600443"
+      },
+{
+        title: "What If You Fall For Me First",
+        author: "G.F. Miller",
+        pitch: "Eager to ditch her goody-two-shoes image, 13-year-old Sofia enlists a cool classmate to help catch her crush's eye, only for real feelings to complicate the plan.",
+        genre: "Humor / Romance",
+        coverUrl: "https://titlepeek2.follettsoftware.com/tp/query?subnumber=1000886&isbn=9781665966443&appid=6&defaultImageID=0&action=11",
+        link: "https://search.follettsoftware.com/metasearch/rest/v2/go/112229/details/600444"
+      }
+    ];
+    /* CONFIGURATION */
+    const AUTO_ADVANCE_INTERVAL_MS = 6000; // Time per slide in milliseconds (6 seconds)
+
+    /* STATE VARIABLES */
+    let currentIndex = 0;
+    let autoAdvanceTimer = null;
+    let progressTimer = null;
+    let startTime = 0;
+    let elapsedTime = 0;
+    let isPaused = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    /* DOM ELEMENTS */
+    const slidesWrapper = document.getElementById("slidesWrapper");
+    const paginationDots = document.getElementById("paginationDots");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const progressBar = document.getElementById("progressBar");
+    const slideCounter = document.getElementById("slideCounter");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const playPauseBtn = document.getElementById("playPauseBtn");
+    const playPauseIcon = document.getElementById("playPauseIcon");
+    const playPauseLabel = document.getElementById("playPauseLabel");
+    const carouselViewport = document.getElementById("carouselViewport");
+
+    /**
+     * Renders all slides and pagination dots based on BOOK_LIST.
+     */
+    function initCarousel() {
+      slidesWrapper.innerHTML = "";
+      paginationDots.innerHTML = "";
+
+      if (!BOOK_LIST || BOOK_LIST.length === 0) {
+        slidesWrapper.innerHTML = `<div style="padding:40px; text-align:center;">No books found in spotlight list.</div>`;
+        return;
+      }
+
+      BOOK_LIST.forEach((book, index) => {
+        // Create Slide Element
+        const slide = document.createElement("div");
+        slide.className = `slide ${index === 0 ? 'active' : ''}`;
+        slide.setAttribute("role", "group");
+        slide.setAttribute("aria-roledescription", "slide");
+        slide.setAttribute("aria-label", `Book ${index + 1} of ${BOOK_LIST.length}: ${book.title}`);
+
+        // Sanitize catalog link button HTML (supports both `link` and `catalogUrl` properties)
+        const targetLink = book.link || book.catalogUrl;
+        const catalogBtnHtml = targetLink 
+          ? `<a href="${escapeHtml(targetLink)}" target="_blank" rel="noopener noreferrer" class="catalog-btn" title="Find in Destiny">
+               <span>Find in Destiny</span>
+               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+             </a>`
+          : '';
+
+        slide.innerHTML = `
+          <div class="book-display">
+            <div class="cover-container">
+              <div class="cover-wrapper">
+                <img 
+                  src="${escapeHtml(book.coverUrl)}" 
+                  alt="Cover image for ${escapeHtml(book.title)}" 
+                  class="cover-image" 
+                  loading="${index === 0 ? 'eager' : 'lazy'}"
+                  onerror="handleCoverError(this, '${escapeJsString(book.title)}')"
+                />
+              </div>
+            </div>
+            <div class="book-details">
+              <span class="genre-pill">${escapeHtml(book.genre || "Featured")}</span>
+              <h2 class="book-title">${escapeHtml(book.title)}</h2>
+              <div class="book-author">by ${escapeHtml(book.author)}</div>
+              <div class="book-pitch-box">
+                <p class="book-pitch">"${escapeHtml(book.pitch)}"</p>
+              </div>
+              ${catalogBtnHtml}
+            </div>
+          </div>
+        `;
+
+        slidesWrapper.appendChild(slide);
+
+        // Create Pagination Dot
+        const dot = document.createElement("button");
+        dot.className = `dot ${index === 0 ? 'active' : ''}`;
+        dot.setAttribute("role", "tab");
+        dot.setAttribute("aria-label", `Go to book slide ${index + 1}: ${book.title}`);
+        dot.setAttribute("aria-selected", index === 0 ? "true" : "false");
+        dot.addEventListener("click", () => goToSlide(index));
+        paginationDots.appendChild(dot);
+      });
+
+      updateCounter();
+      startAutoAdvance();
+    }
+
+    /**
+     * Fallback for broken/failed image loading
+     */
+    function handleCoverError(imgElement, title) {
+      const parent = imgElement.parentElement;
+      if (parent) {
+        parent.innerHTML = `
+          <div class="cover-fallback">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
+            <div class="cover-fallback-title">${escapeHtml(title)}</div>
+          </div>
+        `;
+      }
+    }
+
+    /**
+     * Switches active slide with smooth cross-fade transition.
+     */
+    function goToSlide(targetIndex) {
+      if (targetIndex === currentIndex) return;
+
+      const slides = slidesWrapper.querySelectorAll(".slide");
+      const dots = paginationDots.querySelectorAll(".dot");
+
+      if (!slides.length) return;
+
+      // Handle index wrapping
+      let newIndex = targetIndex;
+      if (newIndex >= BOOK_LIST.length) newIndex = 0;
+      if (newIndex < 0) newIndex = BOOK_LIST.length - 1;
+
+      // Toggle active states
+      slides[currentIndex].classList.remove("active");
+      dots[currentIndex].classList.remove("active");
+      dots[currentIndex].setAttribute("aria-selected", "false");
+
+      currentIndex = newIndex;
+
+      slides[currentIndex].classList.add("active");
+      dots[currentIndex].classList.add("active");
+      dots[currentIndex].setAttribute("aria-selected", "true");
+
+      updateCounter();
+      resetTimer();
+    }
+
+    function nextSlide() {
+      goToSlide(currentIndex + 1);
+    }
+
+    function prevSlide() {
+      goToSlide(currentIndex - 1);
+    }
+
+    function updateCounter() {
+      slideCounter.textContent = `${currentIndex + 1} / ${BOOK_LIST.length}`;
+    }
+
+    /**
+     * Handles timer & smooth progress bar logic
+     */
+    function startAutoAdvance() {
+      stopAutoAdvance();
+      if (isPaused) return;
+
+      startTime = Date.now() - elapsedTime;
+      
+      progressTimer = setInterval(() => {
+        if (isPaused) return;
+        
+        const currentElapsed = Date.now() - startTime;
+        const progressPercent = Math.min((currentElapsed / AUTO_ADVANCE_INTERVAL_MS) * 100, 100);
+        progressBar.style.width = `${progressPercent}%`;
+
+        if (currentElapsed >= AUTO_ADVANCE_INTERVAL_MS) {
+          elapsedTime = 0;
+          nextSlide();
+        }
+      }, 50);
+    }
+
+    function stopAutoAdvance() {
+      if (progressTimer) clearInterval(progressTimer);
+      progressTimer = null;
+    }
+
+    function resetTimer() {
+      elapsedTime = 0;
+      progressBar.style.width = "0%";
+      startAutoAdvance();
+    }
+
+    /**
+     * Pause / Resume functionality (for hover, focus, or manually clicking play/pause button)
+     */
+    function setPauseState(paused, isManualToggle = false) {
+      if (!isManualToggle && isPausedByButton) return; // Stay paused if user locked pause
+
+      isPaused = paused;
+
+      if (isPaused) {
+        elapsedTime = Date.now() - startTime;
+        stopAutoAdvance();
+        statusDot.classList.add("paused");
+        statusText.textContent = "Paused";
+      } else {
+        statusDot.classList.remove("paused");
+        statusText.textContent = "Auto-Playing";
+        startAutoAdvance();
+      }
+
+      updatePlayPauseButtonUI();
+    }
+
+    let isPausedByButton = false;
+
+    function togglePlayPause() {
+      isPausedByButton = !isPausedByButton;
+      setPauseState(isPausedByButton, true);
+    }
+
+    function updatePlayPauseButtonUI() {
+      if (isPaused) {
+        // Show Play icon
+        playPauseIcon.innerHTML = `<path d="M8 5v14l11-7z"/>`;
+        playPauseLabel.textContent = "Play";
+        playPauseBtn.setAttribute("aria-label", "Play Auto Advance");
+      } else {
+        // Show Pause icon
+        playPauseIcon.innerHTML = `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`;
+        playPauseLabel.textContent = "Pause";
+        playPauseBtn.setAttribute("aria-label", "Pause Auto Advance");
+      }
+    }
+
+    /**
+     * Event Listeners & Interactions
+     */
+    function attachEventListeners() {
+      // Manual Arrow Buttons
+      prevBtn.addEventListener("click", () => prevSlide());
+      nextBtn.addEventListener("click", () => nextSlide());
+
+      // Play / Pause Button
+      playPauseBtn.addEventListener("click", togglePlayPause);
+
+      // Pause on Hover / Focus Inside Carousel
+      const widget = document.getElementById("spotlightWidget");
+      widget.addEventListener("mouseenter", () => setPauseState(true));
+      widget.addEventListener("mouseleave", () => setPauseState(false));
+
+      carouselViewport.addEventListener("focusin", () => setPauseState(true));
+      carouselViewport.addEventListener("focusout", (e) => {
+        if (!carouselViewport.contains(e.relatedTarget)) {
+          setPauseState(false);
+        }
+      });
+
+      // Keyboard Left / Right Navigation
+      carouselViewport.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          prevSlide();
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          nextSlide();
+        } else if (e.key === " ") {
+          e.preventDefault();
+          togglePlayPause();
+        }
+      });
+
+      // Touch / Swipe Navigation Support for Mobile & Touchscreens
+      carouselViewport.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 1) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+
+      carouselViewport.addEventListener("touchend", (e) => {
+        if (e.changedTouches.length === 1) {
+          const touchEndX = e.changedTouches[0].clientX;
+          const touchEndY = e.changedTouches[0].clientY;
+          const diffX = touchStartX - touchEndX;
+          const diffY = touchStartY - touchEndY;
+
+          // Verify swipe was horizontal and exceeds threshold
+          if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+            if (diffX > 0) {
+              nextSlide(); // Swipe Left -> Next
+            } else {
+              prevSlide(); // Swipe Right -> Prev
+            }
+          }
+        }
+      }, { passive: true });
+    }
+
+    /**
+     * Helper Utilities
+     */
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeJsString(str) {
+      if (!str) return '';
+      return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+
+    // INITIALIZE ON WINDOW LOAD
+    window.addEventListener("load", () => {
+      initCarousel();
+      attachEventListeners();
+    });
+  </script>
+</body>
+</html>
